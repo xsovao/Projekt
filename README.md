@@ -1,2 +1,2 @@
 # Projekt
-Základ projektu
+Základ projektu, podrobnejší opis - [wiki](../../wiki)
