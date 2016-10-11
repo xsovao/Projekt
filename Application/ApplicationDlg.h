@@ -6,6 +6,7 @@
 
 #include "LogDlg.h"
 #include <GdiPlus.h>
+#include <vector>
 
 class CStaticImage : public CStatic
 {
@@ -47,6 +48,15 @@ public:
 // Implementation
 protected:
 	HICON m_hIcon;
+	bool m_bHistRed;
+	bool m_bHistBlue;
+	bool m_bHistGreen;
+	bool m_bHistAlpha;
+
+	std::vector<int> m_uHistRed;
+	std::vector<int> m_uHistBlue;
+	std::vector<int> m_uHistGreen;
+	std::vector<int> m_uHistAlpha;
 
 	// Generated message map functions
 	BOOL OnInitDialog() override;
@@ -67,6 +77,9 @@ public:
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDrawHistogram(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
+	
+	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
+
 protected:
 	CListCtrl m_ctrlFileList;
 	CStaticImage m_ctrlImage;
@@ -88,4 +101,6 @@ public:
 	afx_msg void OnUpdateLogOpen(CCmdUI *pCmdUI);
 	afx_msg void OnLogClear();
 	afx_msg void OnUpdateLogClear(CCmdUI *pCmdUI);
+	afx_msg void OnHistogramRed();
+	afx_msg void OnUpdateHistogramRed(CCmdUI *pCmdUI);
 };

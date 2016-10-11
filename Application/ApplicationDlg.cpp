@@ -242,6 +242,8 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_COMMAND(ID_LOG_CLEAR, OnLogClear)
 	ON_UPDATE_COMMAND_UI(ID_LOG_CLEAR, OnUpdateLogClear)
 	ON_WM_DESTROY()
+	ON_COMMAND(ID_HISTOGRAM_RED, &CApplicationDlg::OnHistogramRed)
+	ON_UPDATE_COMMAND_UI(ID_HISTOGRAM_RED, &CApplicationDlg::OnUpdateHistogramRed)
 END_MESSAGE_MAP()
 
 
@@ -260,9 +262,9 @@ void CApplicationDlg::OnDestroy()
 LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 {
 	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
-
 	CDC * pDC = CDC::FromHandle(lpDI->hDC);
 
+	
 	pDC->FillSolidRect(&(lpDI->rcItem), RGB(255, 255, 255));
 
 	CBrush brBlack(RGB(0, 0, 0));
@@ -585,7 +587,8 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (!csFileName.IsEmpty())
 	{
-		m_pBitmap = Gdiplus::Bitmap::FromFile(csFileName);
+		LoadAndCalc(csFileName, m_pBitmap, m_uHistRed, m_uHistGreen, m_uHistBlue, m_uHistAlpha);
+
 	}
 
 	m_ctrlImage.Invalidate();
@@ -617,4 +620,47 @@ void CApplicationDlg::OnLogClear()
 void CApplicationDlg::OnUpdateLogClear(CCmdUI *pCmdUI)
 {
 	pCmdUI->Enable(::IsWindow(m_ctrlLog.m_hWnd) && m_ctrlLog.IsWindowVisible());
+}
+
+
+void CApplicationDlg::OnHistogramRed()
+{
+	// TODO: HISTOGRAM RED
+	m_bHistRed = !m_bHistRed;
+	
+
+}
+
+
+void CApplicationDlg::OnUpdateHistogramRed(CCmdUI *pCmdUI)
+{
+	// TODO: HIST RED UPDATE
+	if(m_bHistRed)pCmdUI->SetCheck(1);
+	else pCmdUI->SetCheck(0);
+}
+
+void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
+	
+	histR.clear();
+	histR.assign(256, 0);
+	histG.clear();
+	histG.assign(256, 0);
+	histB.clear();
+	histB.assign(256, 0);
+	histA.clear();
+	histA.assign(256, 0);
+	Gdiplus::Color *color;
+
+	bmp = Gdiplus::Bitmap::FromFile(filename);
+	if (bmp == NULL)return;
+	for (int x = 0; x < bmp->GetWidth(); x++) {
+		for (int y = 0; y < bmp->GetHeight(); y++) {
+			bmp->GetPixel(x, y, color);
+				histR[color->GetRed()]++;
+				histG[color->GetGreen()]++;
+				histB[color->GetBlue()]++;
+				histA[color->GetAlpha()]++;
+		}
+	}
+
 }
