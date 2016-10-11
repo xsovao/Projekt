@@ -649,7 +649,7 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	histB.assign(256, 0);
 	histA.clear();
 	histA.assign(256, 0);
-	Gdiplus::Color *color;
+	Gdiplus::Color *color = new Gdiplus::Color();
 
 	bmp = Gdiplus::Bitmap::FromFile(filename);
 	if (bmp == NULL)return;
