@@ -244,6 +244,10 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_WM_DESTROY()
 	ON_COMMAND(ID_HISTOGRAM_RED, &CApplicationDlg::OnHistogramRed)
 	ON_UPDATE_COMMAND_UI(ID_HISTOGRAM_RED, &CApplicationDlg::OnUpdateHistogramRed)
+	ON_COMMAND(ID_HISTOGRAM_GREEN, &CApplicationDlg::OnHistogramGreen)
+	ON_UPDATE_COMMAND_UI(ID_HISTOGRAM_GREEN, &CApplicationDlg::OnUpdateHistogramGreen)
+	ON_COMMAND(ID_HISTOGRAM_BLUE, &CApplicationDlg::OnHistogramBlue)
+	ON_UPDATE_COMMAND_UI(ID_HISTOGRAM_BLUE, &CApplicationDlg::OnUpdateHistogramBlue)
 END_MESSAGE_MAP()
 
 
@@ -264,12 +268,36 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	LPDRAWITEMSTRUCT lpDI = (LPDRAWITEMSTRUCT)wParam;
 	CDC * pDC = CDC::FromHandle(lpDI->hDC);
 
-	
 	pDC->FillSolidRect(&(lpDI->rcItem), RGB(255, 255, 255));
 
+	int left = lpDI->rcItem.left;
+	int bottom = lpDI->rcItem.bottom;
+	int width = lpDI->rcItem.right - lpDI->rcItem.left;
+	int height = lpDI->rcItem.bottom - lpDI->rcItem.top;
+	CRect rect(0, 0, width, height);
+	if(m_bHistRed)DrawHist(pDC, rect, RGB(255,0,0), m_uHistRed);
+	if (m_bHistGreen)DrawHist(pDC, rect, RGB(0, 255, 0), m_uHistGreen);
+	if (m_bHistBlue)DrawHist(pDC, rect, RGB(0, 0, 255), m_uHistBlue);
+
+/*
+	double dw = (double)width / 255.0;
+	double dh;
+	int m_max = 0;
+
+	for (int x = 0; x < m_uHistRed.size(); x++) {
+		if (m_uHistRed[x] > m_max)m_max = m_uHistRed[x];
+	}
+
+	for (int x = 0; x < m_uHistRed.size(); x++) {
+		
+		dh = (double)(m_uHistRed[x] / (double)m_max) * height;
+		pDC->FillSolidRect(left + dw*x, bottom - dh, 1, dh, RGB(255,0,0));
+		
+	}
+	*/
 	CBrush brBlack(RGB(0, 0, 0));
 	pDC->FrameRect(&(lpDI->rcItem), &brBlack);
-
+	
 	return S_OK;
 }
 
@@ -627,7 +655,7 @@ void CApplicationDlg::OnHistogramRed()
 {
 	// TODO: HISTOGRAM RED
 	m_bHistRed = !m_bHistRed;
-	
+	Invalidate();
 
 }
 
@@ -637,6 +665,8 @@ void CApplicationDlg::OnUpdateHistogramRed(CCmdUI *pCmdUI)
 	// TODO: HIST RED UPDATE
 	if(m_bHistRed)pCmdUI->SetCheck(1);
 	else pCmdUI->SetCheck(0);
+
+
 }
 
 void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
@@ -663,4 +693,51 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 		}
 	}
 
+}
+
+void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int> &hist) {
+
+	double dw = (double)rect.Width() / 255.0;
+	double dh;
+	int m_max = 0;
+
+	for (int x = 0; x < hist.size(); x++) {
+		if (hist[x] > m_max)m_max = hist[x];
+	}
+
+	for (int x = 0; x <hist.size(); x++) {
+
+		dh = (double)(hist[x] / (double)m_max) * rect.Height();
+		pDC->FillSolidRect(dw*x, rect.Height() - dh, 1, dh, clr);
+
+	}
+
+}
+
+void CApplicationDlg::OnHistogramGreen()
+{
+	m_bHistGreen = !m_bHistGreen;
+	Invalidate();
+}
+
+
+void CApplicationDlg::OnUpdateHistogramGreen(CCmdUI *pCmdUI)
+{
+	if (m_bHistGreen)pCmdUI->SetCheck(1);
+	else pCmdUI->SetCheck(0);
+
+}
+
+
+void CApplicationDlg::OnHistogramBlue()
+{
+	m_bHistBlue = !m_bHistBlue;
+	Invalidate();
+}
+
+
+void CApplicationDlg::OnUpdateHistogramBlue(CCmdUI *pCmdUI)
+{
+	if (m_bHistBlue)pCmdUI->SetCheck(1);
+	else pCmdUI->SetCheck(0);
 }

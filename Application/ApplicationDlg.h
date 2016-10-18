@@ -79,7 +79,7 @@ public:
 	afx_msg void OnDestroy();
 	
 	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
-
+	void CApplicationDlg::DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist);
 protected:
 	CListCtrl m_ctrlFileList;
 	CStaticImage m_ctrlImage;
@@ -103,4 +103,8 @@ public:
 	afx_msg void OnUpdateLogClear(CCmdUI *pCmdUI);
 	afx_msg void OnHistogramRed();
 	afx_msg void OnUpdateHistogramRed(CCmdUI *pCmdUI);
+	afx_msg void OnHistogramGreen();
+	afx_msg void OnUpdateHistogramGreen(CCmdUI *pCmdUI);
+	afx_msg void OnHistogramBlue();
+	afx_msg void OnUpdateHistogramBlue(CCmdUI *pCmdUI);
 };
