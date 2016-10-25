@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 #include "Utils.h"
+#include <math.h>
 #include <omp.h>
 
 #ifdef _DEBUG
@@ -275,26 +276,10 @@ LRESULT CApplicationDlg::OnDrawHistogram(WPARAM wParam, LPARAM lParam)
 	int width = lpDI->rcItem.right - lpDI->rcItem.left;
 	int height = lpDI->rcItem.bottom - lpDI->rcItem.top;
 	CRect rect(0, 0, width, height);
-	if(m_bHistRed)DrawHist(pDC, rect, RGB(255,0,0), m_uHistRed);
-	if (m_bHistGreen)DrawHist(pDC, rect, RGB(0, 255, 0), m_uHistGreen);
-	if (m_bHistBlue)DrawHist(pDC, rect, RGB(0, 0, 255), m_uHistBlue);
+	if(m_bHistRed)DrawHist(pDC, rect, RGB(255,0,0), m_uHistRed,m_max);
+	if (m_bHistGreen)DrawHist(pDC, rect, RGB(0, 255, 0), m_uHistGreen, m_max);
+	if (m_bHistBlue)DrawHist(pDC, rect, RGB(0, 0, 255), m_uHistBlue, m_max);
 
-/*
-	double dw = (double)width / 255.0;
-	double dh;
-	int m_max = 0;
-
-	for (int x = 0; x < m_uHistRed.size(); x++) {
-		if (m_uHistRed[x] > m_max)m_max = m_uHistRed[x];
-	}
-
-	for (int x = 0; x < m_uHistRed.size(); x++) {
-		
-		dh = (double)(m_uHistRed[x] / (double)m_max) * height;
-		pDC->FillSolidRect(left + dw*x, bottom - dh, 1, dh, RGB(255,0,0));
-		
-	}
-	*/
 	CBrush brBlack(RGB(0, 0, 0));
 	pDC->FrameRect(&(lpDI->rcItem), &brBlack);
 	
@@ -656,7 +641,6 @@ void CApplicationDlg::OnHistogramRed()
 	// TODO: HISTOGRAM RED
 	m_bHistRed = !m_bHistRed;
 	Invalidate();
-
 }
 
 
@@ -665,53 +649,6 @@ void CApplicationDlg::OnUpdateHistogramRed(CCmdUI *pCmdUI)
 	// TODO: HIST RED UPDATE
 	if(m_bHistRed)pCmdUI->SetCheck(1);
 	else pCmdUI->SetCheck(0);
-
-
-}
-
-void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
-	
-	histR.clear();
-	histR.assign(256, 0);
-	histG.clear();
-	histG.assign(256, 0);
-	histB.clear();
-	histB.assign(256, 0);
-	histA.clear();
-	histA.assign(256, 0);
-	Gdiplus::Color *color = new Gdiplus::Color();
-
-	bmp = Gdiplus::Bitmap::FromFile(filename);
-	if (bmp == NULL)return;
-	for (int x = 0; x < bmp->GetWidth(); x++) {
-		for (int y = 0; y < bmp->GetHeight(); y++) {
-			bmp->GetPixel(x, y, color);
-				histR[color->GetRed()]++;
-				histG[color->GetGreen()]++;
-				histB[color->GetBlue()]++;
-				histA[color->GetAlpha()]++;
-		}
-	}
-
-}
-
-void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int> &hist) {
-
-	double dw = (double)rect.Width() / 255.0;
-	double dh;
-	int m_max = 0;
-
-	for (int x = 0; x < hist.size(); x++) {
-		if (hist[x] > m_max)m_max = hist[x];
-	}
-
-	for (int x = 0; x <hist.size(); x++) {
-
-		dh = (double)(hist[x] / (double)m_max) * rect.Height();
-		pDC->FillSolidRect(dw*x, rect.Height() - dh, 1, dh, clr);
-
-	}
-
 }
 
 void CApplicationDlg::OnHistogramGreen()
@@ -741,3 +678,66 @@ void CApplicationDlg::OnUpdateHistogramBlue(CCmdUI *pCmdUI)
 	if (m_bHistBlue)pCmdUI->SetCheck(1);
 	else pCmdUI->SetCheck(0);
 }
+
+
+void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
+	
+	histR.clear();
+	histR.assign(256, 0);
+	histG.clear();
+	histG.assign(256, 0);
+	histB.clear();
+	histB.assign(256, 0);
+	histA.clear();
+	histA.assign(256, 0);
+
+	bmp = Gdiplus::Bitmap::FromFile(filename);
+	uint32_t *pLine;
+	Gdiplus::Color *color = new Gdiplus::Color();
+	Gdiplus::BitmapData bmpd;
+	Gdiplus::Rect *rect = new Gdiplus::Rect(0, 0, bmp->GetWidth(), bmp->GetHeight());
+	if (bmp == NULL)return;
+	bmp->LockBits(rect,Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmpd);
+	
+	CalcHist((uint8_t*)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(),bmp->GetHeight(), histR, histG, histB, histA);
+
+	for (int x = 0; x < histR.size(); x++) {
+		if (histR[x] > m_max)m_max = histR[x];
+		if (histG[x] > m_max)m_max = histG[x];
+		if (histB[x] > m_max)m_max = histB[x];
+	}
+	bmp->UnlockBits(&bmpd);
+}
+
+void CApplicationDlg::CalcHist(uint8_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA){
+	
+	uint32_t *pLine = (uint32_t*)((uint8_t *)scan0);
+
+	for (int y = 0; y < h; y++) {
+		for (int x = 0; x < w; x++) {
+
+			histR[((*pLine) >> 16) & 0xff]++;
+			histG[((*pLine) >> 8) & 0xff]++;
+			histB[(*pLine) & 0xff]++;
+			pLine++;
+		}
+		pLine = (uint32_t*)(scan0 + stride*(y + 1));
+	}
+}
+
+void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int> &hist,int max) {
+
+	double dw = (double)rect.Width() / 255.0;
+	double dh;
+	std::vector<int> val();
+
+
+	for (int x = 0; x <hist.size(); x++) {
+
+		dh = (double)(log(hist[x]) / (double)max) * rect.Height();
+		pDC->FillSolidRect(dw*x, rect.Height() - dh, 1, dh, clr);
+
+	}
+
+}
+
