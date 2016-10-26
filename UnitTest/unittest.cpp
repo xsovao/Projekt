@@ -36,12 +36,25 @@ namespace UnitTest
 		TEST_METHOD(TestHist)
 		{
 			//TODO unit test
+			int w = 1024;
+			int h = 1024;
+			uint32_t* pBitmap = new uint32_t[1024,1024];
+			for (int x = 0; x < w; x++) {
+				for (int y = 0; y < h; y++) {
+					pBitmap[x, y] = 0xffffffff;
+				}
+			}
+
 			std::vector<int> r, g, b, i;
 			r.assign(256, 0);
 			g.assign(256, 0);
 			b.assign(256, 0);
 			i.assign(256, 0);
-			CalcHist();
+			CalcHist(pBitmap,w*4,w,h,r,g,b,i);
+
+			Assert::AreEqual(r[255],w*h,L"allR in 255");
+			Assert::AreEqual(g[255], w*h, L"allG in 255");
+			Assert::AreEqual(b[255], w*h, L"allB in 255");
 		}
 	};
 }

@@ -699,7 +699,7 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	if (bmp == NULL)return;
 	bmp->LockBits(rect,Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmpd);
 	
-	CalcHist((uint8_t*)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(),bmp->GetHeight(), histR, histG, histB, histA);
+	CalcHist((uint32_t*)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(),bmp->GetHeight(), histR, histG, histB, histA);
 
 	for (int x = 0; x < histR.size(); x++) {
 		if (histR[x] > m_max)m_max = histR[x];
@@ -709,9 +709,9 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	bmp->UnlockBits(&bmpd);
 }
 
-void CApplicationDlg::CalcHist(uint8_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA){
+void CApplicationDlg::CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA){
 	
-	uint32_t *pLine = (uint32_t*)((uint8_t *)scan0);
+	uint32_t *pLine = scan0;
 
 	for (int y = 0; y < h; y++) {
 		for (int x = 0; x < w; x++) {

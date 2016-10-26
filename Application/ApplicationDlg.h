@@ -81,7 +81,7 @@ public:
 	
 	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
 	void CApplicationDlg::DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist, int max);
-	void CApplicationDlg::CalcHist(uint8_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
+	void CApplicationDlg::CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
 protected:
 	CListCtrl m_ctrlFileList;
 	CStaticImage m_ctrlImage;

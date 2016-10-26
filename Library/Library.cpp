@@ -30,7 +30,7 @@ LIBRARY_API std::pair< CString, std::vector<CString> > ParseFiles(LPCTSTR lpstrF
 	return Utils::ParseFiles(lpstrFile);
 }
 
-LIBRARY_API void CalcHist(uint8_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
+LIBRARY_API void CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
 	return Utils::CalcHist(scan0, stride, w, h, histR, histG, histB, histA);
 
 }
