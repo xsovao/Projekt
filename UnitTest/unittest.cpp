@@ -38,11 +38,9 @@ namespace UnitTest
 			//TODO unit test
 			int w = 1024;
 			int h = 1024;
-			uint32_t* pBitmap = new uint32_t[1024,1024];
-			for (int x = 0; x < w; x++) {
-				for (int y = 0; y < h; y++) {
-					pBitmap[x, y] = 0xffffffff;
-				}
+			uint32_t* pBitmap = new uint32_t[1024*1024];
+			for (int x = 0; x < 1024*1024; x++) {
+					pBitmap[x] = 0xffff;
 			}
 
 			std::vector<int> r, g, b, i;
