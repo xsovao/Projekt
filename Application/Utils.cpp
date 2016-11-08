@@ -41,9 +41,9 @@ namespace Utils
 
 	}
 
-	void CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
+	void CalcHist(uint32_t* scan0, UINT32 stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
 
-		uint32_t *pLine = (uint32_t*)((uint8_t *)scan0);
+		uint32_t *pLine = scan0;
 
 		for (int y = 0; y < h; y++) {
 			for (int x = 0; x < w; x++) {
@@ -53,7 +53,7 @@ namespace Utils
 				histB[(*pLine) & 0xff]++;
 				pLine++;
 			}
-			pLine = (uint32_t*)(scan0 + stride*(y + 1));
+			pLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
 		}
 	}
 }

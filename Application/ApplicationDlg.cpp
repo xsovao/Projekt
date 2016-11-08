@@ -237,6 +237,7 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_WM_SIZING()
 	ON_MESSAGE(WM_DRAW_IMAGE, OnDrawImage)
 	ON_MESSAGE(WM_DRAW_HISTOGRAM, OnDrawHistogram)
+	ON_MESSAGE(WM_SET_BITMAP, OnSetBitmap)
 	ON_NOTIFY(LVN_ITEMCHANGED, IDC_FILE_LIST, OnLvnItemchangedFileList)
 	ON_COMMAND(ID_LOG_OPEN, OnLogOpen)
 	ON_UPDATE_COMMAND_UI(ID_LOG_OPEN, OnUpdateLogOpen)
@@ -600,15 +601,52 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (!csFileName.IsEmpty())
 	{
-		LoadAndCalc(csFileName, m_pBitmap, m_uHistRed, m_uHistGreen, m_uHistBlue, m_uHistAlpha);
 
+		/*thread lambda func*/
+		std::thread thr([this,csFileName]() {
+			std::thread::id thisid = std::this_thread::get_id();
+			std::vector<int> red,green,blue,a;
+			Gdiplus::Bitmap *bmp = nullptr;
+
+			LoadAndCalc(csFileName, bmp,red,green,blue,a);
+			/*std::tuple<...types...> tuple = std::make_tuple(..vars..)*/
+
+
+			if (thisid == thid) {
+				m_pBitmap = bmp;
+				m_uHistRed = std::move(red);
+				m_uHistGreen = std::move(green);
+				m_uHistBlue = std::move(blue);
+				m_uHistAlpha = std::move(a);
+
+				m_ctrlImage.Invalidate();
+				m_ctrlHistogram.Invalidate();
+			}
+
+			
+		});
+		thid = thr.get_id();
+		thr.detach();
+
+		/*
+		LoadAndCalc(csFileName, m_pBitmap, m_uHistRed, m_uHistGreen, m_uHistBlue, m_uHistAlpha);
+		*/
 	}
 
 	m_ctrlImage.Invalidate();
-
 	m_ctrlHistogram.Invalidate();
 
 	*pResult = 0;
+}
+
+LRESULT CApplicationDlg::OnSetBitmap(WPARAM wParam, LPARAM lParam) {
+	/******/
+	/*
+	auto tuple=(std::tuple<...>*)wParasm
+	std::set<0>(*tuple); //pBitmap
+	*/
+
+	return 0;
 }
 
 
@@ -699,7 +737,7 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	if (bmp == NULL)return;
 	bmp->LockBits(rect,Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmpd);
 	
-	CalcHist((uint32_t*)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(),bmp->GetHeight(), histR, histG, histB, histA);
+	Utils::CalcHist((uint32_t *)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(),bmp->GetHeight(), histR, histG, histB, histA);
 
 	for (int x = 0; x < histR.size(); x++) {
 		if (histR[x] > m_max)m_max = histR[x];
@@ -707,22 +745,6 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 		if (histB[x] > m_max)m_max = histB[x];
 	}
 	bmp->UnlockBits(&bmpd);
-}
-
-void CApplicationDlg::CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA){
-	
-	uint32_t *pLine = scan0;
-
-	for (int y = 0; y < h; y++) {
-		for (int x = 0; x < w; x++) {
-
-			histR[((*pLine) >> 16) & 0xff]++;
-			histG[((*pLine) >> 8) & 0xff]++;
-			histB[(*pLine) & 0xff]++;
-			pLine++;
-		}
-		pLine = (uint32_t*)(scan0 + stride*(y + 1));
-	}
 }
 
 void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int> &hist,int max) {

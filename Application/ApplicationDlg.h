@@ -7,6 +7,8 @@
 #include "LogDlg.h"
 #include <GdiPlus.h>
 #include <vector>
+#include <thread>
+#include <atomic>
 
 class CStaticImage : public CStatic
 {
@@ -28,7 +30,8 @@ public:
 	enum
 	{
 		WM_DRAW_IMAGE = (WM_USER + 1),
-		WM_DRAW_HISTOGRAM
+		WM_DRAW_HISTOGRAM,
+		WM_SET_BITMAP
 	};
 
 	CApplicationDlg(CWnd* pParent = NULL);	// standard constructor
@@ -58,6 +61,8 @@ protected:
 	std::vector<int> m_uHistGreen;
 	std::vector<int> m_uHistAlpha;
 
+	std::atomic<std::thread::id> thid;
+
 	int m_max;
 	// Generated message map functions
 	BOOL OnInitDialog() override;
@@ -77,11 +82,11 @@ public:
 	afx_msg void OnSize(UINT nType, int cx, int cy);
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDrawHistogram(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnSetBitmap(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
 	
 	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
 	void CApplicationDlg::DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist, int max);
-	void CApplicationDlg::CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
 protected:
 	CListCtrl m_ctrlFileList;
 	CStaticImage m_ctrlImage;
