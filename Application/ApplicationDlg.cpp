@@ -592,6 +592,12 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 	LoadAndCalc(fname, bmp, red, green, blue, a);
 
 	if (thisid == thid) {
+
+
+		std::tuple<Gdiplus::Bitmap*, std::vector<int>&, std::vector<int>&, std::vector<int>&, std::vector<int>&> obj(bmp, red, green, blue, a);
+		SendMessage(WM_SET_BITMAP, (WPARAM)&obj);
+
+		/*
 		m_pBitmap = bmp;
 		m_uHistRed = std::move(red);
 		m_uHistGreen = std::move(green);
@@ -599,7 +605,7 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 		m_uHistAlpha = std::move(a);
 
 		m_ctrlImage.Invalidate();
-		m_ctrlHistogram.Invalidate();
+		m_ctrlHistogram.Invalidate();*/
 	}
 	else {
 		delete bmp;
@@ -640,11 +646,15 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 }
 
 LRESULT CApplicationDlg::OnSetBitmap(WPARAM wParam, LPARAM lParam) {
-	/******/
-	/*
-	auto tuple=(std::tuple<...>*)wParasm
-	std::set<0>(*tuple); //pBitmap
-	*/
+
+	auto tup = (std::tuple<Gdiplus::Bitmap*, std::vector<int>&, std::vector<int>&, std::vector<int>&, std::vector<int>&> *)(wParam);
+	m_pBitmap = std::get<0>(*tup);
+	m_uHistRed = std::move(std::get<1>(*tup));
+	m_uHistGreen = std::move(std::get<2>(*tup));
+	m_uHistBlue = std::move(std::get<3>(*tup));
+	m_uHistAlpha = std::move(std::get<4>(*tup));
+	m_ctrlImage.Invalidate();
+	m_ctrlHistogram.Invalidate();
 
 	return 0;
 }
