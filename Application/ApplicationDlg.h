@@ -86,7 +86,8 @@ public:
 	afx_msg void OnDestroy();
 	
 	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
-	void CApplicationDlg::DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist, int max);
+	void DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist, int max);
+	void OnLoadImage(CString fname);
 protected:
 	CListCtrl m_ctrlFileList;
 	CStaticImage m_ctrlImage;

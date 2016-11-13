@@ -583,6 +583,30 @@ LRESULT CApplicationDlg::OnKickIdle(WPARAM wParam, LPARAM lParam)
 	}
 	return TRUE;
 }
+void CApplicationDlg::OnLoadImage(CString fname) {
+
+	std::thread::id thisid = std::this_thread::get_id();
+	std::vector<int> red, green, blue, a;
+	Gdiplus::Bitmap *bmp = nullptr;
+	thid = std::this_thread::get_id();
+	LoadAndCalc(fname, bmp, red, green, blue, a);
+
+	if (thisid == thid) {
+		m_pBitmap = bmp;
+		m_uHistRed = std::move(red);
+		m_uHistGreen = std::move(green);
+		m_uHistBlue = std::move(blue);
+		m_uHistAlpha = std::move(a);
+
+		m_ctrlImage.Invalidate();
+		m_ctrlHistogram.Invalidate();
+	}
+	else {
+		delete bmp;
+	}
+}
+
+
 
 void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 {
@@ -601,41 +625,17 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 
 	if (!csFileName.IsEmpty())
 	{
-
+		
 		/*thread lambda func*/
-		std::thread thr([this,csFileName]() {
-			std::thread::id thisid = std::this_thread::get_id();
-			std::vector<int> red,green,blue,a;
-			Gdiplus::Bitmap *bmp = nullptr;
-
-			LoadAndCalc(csFileName, bmp,red,green,blue,a);
-			/*std::tuple<...types...> tuple = std::make_tuple(..vars..)*/
-
-
-			if (thisid == thid) {
-				m_pBitmap = bmp;
-				m_uHistRed = std::move(red);
-				m_uHistGreen = std::move(green);
-				m_uHistBlue = std::move(blue);
-				m_uHistAlpha = std::move(a);
-
-				m_ctrlImage.Invalidate();
-				m_ctrlHistogram.Invalidate();
-			}
-
-			
-		});
-		thid = thr.get_id();
+		
+		std::thread thr(&CApplicationDlg::OnLoadImage,this, csFileName);
 		thr.detach();
-
-		/*
-		LoadAndCalc(csFileName, m_pBitmap, m_uHistRed, m_uHistGreen, m_uHistBlue, m_uHistAlpha);
-		*/
+		
+		/*LoadAndCalc(csFileName, m_pBitmap, m_uHistRed, m_uHistGreen, m_uHistBlue, m_uHistAlpha);
+		m_ctrlImage.Invalidate();
+		m_ctrlHistogram.Invalidate();*/
 	}
-
-	m_ctrlImage.Invalidate();
-	m_ctrlHistogram.Invalidate();
-
+	
 	*pResult = 0;
 }
 
@@ -739,6 +739,12 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	
 	Utils::CalcHist((uint32_t *)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(),bmp->GetHeight(), histR, histG, histB, histA);
 
+	/*for (int x = 0; x < histR.size(); x++) {
+		histR[x] = log(histR[x]);
+		histG[x] = log(histG[x]);
+		histB[x] = log(histB[x]);
+	}*/
+
 	for (int x = 0; x < histR.size(); x++) {
 		if (histR[x] > m_max)m_max = histR[x];
 		if (histG[x] > m_max)m_max = histG[x];
@@ -756,7 +762,7 @@ void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int
 
 	for (int x = 0; x <hist.size(); x++) {
 
-		dh = (double)(log(hist[x]) / (double)max) * rect.Height();
+		dh = (double)(log(hist[x]) / log((double)max)) * rect.Height();
 		pDC->FillSolidRect(dw*x, rect.Height() - dh, 1, dh, clr);
 
 	}
