@@ -250,6 +250,12 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_HISTOGRAM_GREEN, &CApplicationDlg::OnUpdateHistogramGreen)
 	ON_COMMAND(ID_HISTOGRAM_BLUE, &CApplicationDlg::OnHistogramBlue)
 	ON_UPDATE_COMMAND_UI(ID_HISTOGRAM_BLUE, &CApplicationDlg::OnUpdateHistogramBlue)
+	ON_COMMAND(ID_IMAGEFLIP_HORIZONTAL, &CApplicationDlg::OnImageflipHorizontal)
+	ON_UPDATE_COMMAND_UI(ID_IMAGEFLIP_HORIZONTAL, &CApplicationDlg::OnUpdateImageflipHorizontal)
+	ON_COMMAND(ID_IMAGEFLIP_VERTICAL, &CApplicationDlg::OnImageflipVertical)
+	ON_UPDATE_COMMAND_UI(ID_IMAGEFLIP_VERTICAL, &CApplicationDlg::OnUpdateImageflipVertical)
+	ON_COMMAND(ID_IMAGEFLIP_SHOW, &CApplicationDlg::OnImageflipShow)
+	ON_UPDATE_COMMAND_UI(ID_IMAGEFLIP_SHOW, &CApplicationDlg::OnUpdateImageflipShow)
 END_MESSAGE_MAP()
 
 
@@ -588,13 +594,19 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 	std::thread::id thisid = std::this_thread::get_id();
 	std::vector<int> red, green, blue, a;
 	Gdiplus::Bitmap *bmp = nullptr;
-	thid = std::this_thread::get_id();
-	LoadAndCalc(fname, bmp, red, green, blue, a);
+	Gdiplus::Bitmap *newbmp = nullptr;
+	m_thid = std::this_thread::get_id();
 
-	if (thisid == thid) {
+	//LoadAndCalc(fname, bmp, red, green, blue, a,m_thid);
+	ProcessImage(fname, bmp, newbmp,thisid);
 
+	if (thisid == m_thid) {
 
+		/*
 		std::tuple<Gdiplus::Bitmap*, std::vector<int>&, std::vector<int>&, std::vector<int>&, std::vector<int>&> obj(bmp, red, green, blue, a);
+		SendMessage(WM_SET_BITMAP, (WPARAM)&obj);
+		*/
+		std::tuple<Gdiplus::Bitmap*, Gdiplus::Bitmap* > obj(bmp,newbmp);
 		SendMessage(WM_SET_BITMAP, (WPARAM)&obj);
 
 		/*
@@ -612,8 +624,6 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 	}
 }
 
-
-
 void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 {
 	LPNMLISTVIEW pNMLV = reinterpret_cast<LPNMLISTVIEW>(pNMHDR);
@@ -624,6 +634,12 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 		m_pBitmap = nullptr;
 	}
 
+	if (m_pBitmapFlipped != nullptr)
+	{
+		delete m_pBitmapFlipped;
+		m_pBitmapFlipped = nullptr;
+	}
+
 	CString csFileName;
 	POSITION pos = m_ctrlFileList.GetFirstSelectedItemPosition();
 	if (pos)
@@ -632,9 +648,10 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 	if (!csFileName.IsEmpty())
 	{
 		
-		/*thread lambda func*/
-		
-		std::thread thr(&CApplicationDlg::OnLoadImage,this, csFileName);
+		/*std::thread thr(&CApplicationDlg::OnLoadImage,this, csFileName);
+		thr.detach();*/
+
+		std::thread thr(&CApplicationDlg::OnLoadImage, this, csFileName);
 		thr.detach();
 		
 		/*LoadAndCalc(csFileName, m_pBitmap, m_uHistRed, m_uHistGreen, m_uHistBlue, m_uHistAlpha);
@@ -647,14 +664,19 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 
 LRESULT CApplicationDlg::OnSetBitmap(WPARAM wParam, LPARAM lParam) {
 
-	auto tup = (std::tuple<Gdiplus::Bitmap*, std::vector<int>&, std::vector<int>&, std::vector<int>&, std::vector<int>&> *)(wParam);
+	/*auto tup = (std::tuple<Gdiplus::Bitmap*, std::vector<int>&, std::vector<int>&, std::vector<int>&, std::vector<int>&> *)(wParam);
 	m_pBitmap = std::get<0>(*tup);
 	m_uHistRed = std::move(std::get<1>(*tup));
 	m_uHistGreen = std::move(std::get<2>(*tup));
 	m_uHistBlue = std::move(std::get<3>(*tup));
 	m_uHistAlpha = std::move(std::get<4>(*tup));
 	m_ctrlImage.Invalidate();
-	m_ctrlHistogram.Invalidate();
+	m_ctrlHistogram.Invalidate();*/
+
+	auto tup = (std::tuple<Gdiplus::Bitmap*, Gdiplus::Bitmap*>*)(wParam);
+	m_pBitmap = std::get<0>(*tup);
+	m_pBitmapFlipped = std::get<1>(*tup);
+	m_ctrlImage.Invalidate();
 
 	return 0;
 }
@@ -728,7 +750,7 @@ void CApplicationDlg::OnUpdateHistogramBlue(CCmdUI *pCmdUI)
 }
 
 
-void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
+void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA,std::thread::id me) {
 	
 	histR.clear();
 	histR.assign(256, 0);
@@ -746,8 +768,8 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	Gdiplus::Rect *rect = new Gdiplus::Rect(0, 0, bmp->GetWidth(), bmp->GetHeight());
 	if (bmp == NULL)return;
 	bmp->LockBits(rect,Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmpd);
-	
-	Utils::CalcHist((uint32_t *)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(),bmp->GetHeight(), histR, histG, histB, histA);
+
+	//Utils::CalcHist((uint32_t *)bmpd.Scan0, bmpd.Stride, bmp->GetWidth(), bmp->GetHeight(), histR, histG, histB, histA, m_threads,nullptr);
 
 	/*for (int x = 0; x < histR.size(); x++) {
 		histR[x] = log(histR[x]);
@@ -761,6 +783,30 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 		if (histB[x] > m_max)m_max = histB[x];
 	}
 	bmp->UnlockBits(&bmpd);
+}
+
+void CApplicationDlg::ProcessImage(CString filename, Gdiplus::Bitmap *&bmp, Gdiplus::Bitmap *&newbmp, std::thread::id me) {
+
+	bmp = Gdiplus::Bitmap::FromFile(filename);
+	newbmp = Gdiplus::Bitmap::FromFile(filename);
+	uint32_t *pLine;
+	Gdiplus::BitmapData bmpd;
+	Gdiplus::BitmapData nbmpd;
+	Gdiplus::Rect *rect = new Gdiplus::Rect(0, 0, bmp->GetWidth(), bmp->GetHeight());
+	if (bmp == NULL)return;
+	bmp->LockBits(rect, Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmpd);
+	newbmp->LockBits(rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppRGB, &nbmpd);
+
+	Utils::FlipImage((uint32_t *)bmpd.Scan0, (uint32_t *)nbmpd.Scan0, bmpd.Stride, bmp->GetWidth(), bmp->GetHeight(), m_mode);
+
+	/*for (int x = 0; x < histR.size(); x++) {
+	histR[x] = log(histR[x]);
+	histG[x] = log(histG[x]);
+	histB[x] = log(histB[x]);
+	}*/
+
+	bmp->UnlockBits(&bmpd);
+	newbmp->UnlockBits(&bmpd);
 }
 
 void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int> &hist,int max) {
@@ -779,3 +825,37 @@ void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int
 
 }
 
+void CApplicationDlg::OnImageflipHorizontal()
+{
+	m_mode = HORIZONTAL;
+	Invalidate();
+}
+
+
+void CApplicationDlg::OnUpdateImageflipHorizontal(CCmdUI *pCmdUI)
+{
+}
+
+
+void CApplicationDlg::OnImageflipVertical()
+{
+	m_mode = VERTICAL;
+	Invalidate();
+}
+
+
+void CApplicationDlg::OnUpdateImageflipVertical(CCmdUI *pCmdUI)
+{
+}
+
+
+void CApplicationDlg::OnImageflipShow()
+{
+	m_show = !m_show;
+}
+
+void CApplicationDlg::OnUpdateImageflipShow(CCmdUI *pCmdUI)
+{
+	if (m_show)pCmdUI->SetCheck();
+	else pCmdUI->SetCheck(0);
+}

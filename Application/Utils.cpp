@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Utils.h"
 
+
 namespace Utils
 {
 	//	parse file names from file name string in OPENFILENAME struct
@@ -41,19 +42,73 @@ namespace Utils
 
 	}
 
-	void CalcHist(uint32_t* scan0, UINT32 stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
+	void CalcHist(uint32_t* scan0, UINT32 stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA,int thrs,std::function<bool()> fCancel()) {
 
-		uint32_t *pLine = scan0;
+		uint32_t *pLine;
+
+
 
 		for (int y = 0; y < h; y++) {
+			pLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
+			//if(fCancel())return;
 			for (int x = 0; x < w; x++) {
-
 				histR[((*pLine) >> 16) & 0xff]++;
 				histG[((*pLine) >> 8) & 0xff]++;
 				histB[(*pLine) & 0xff]++;
 				pLine++;
 			}
-			pLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
+			
 		}
 	}
+
+	void ThreadCalc(uint32_t* scan0, UINT32 stride, int xx, int yy,int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
+		
+		uint32_t *pLine;
+		for (int y = yy; y < h; y++) {
+			pLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
+			//if(fCancel())return;
+			for (int x = xx; x < w; x++) {
+				histR[((*pLine) >> 16) & 0xff]++;
+				histG[((*pLine) >> 8) & 0xff]++;
+				histB[(*pLine) & 0xff]++;
+				pLine++;
+			}
+
+		}
+	
+	}
+
+	void FlipImage(uint32_t* scan0, uint32_t* print0, UINT32 stride, int w, int h, Flip mode) {
+	
+		uint32_t *sLine,*pLine;
+		
+		switch (mode) {
+		case HORIZONTAL:
+			for (int y = 0; y < h; y++) {
+				sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
+				pLine = (uint32_t*)((uint8_t*)scan0 + stride*(h - 1) - stride*(y));
+				//if(fCancel())return;
+				memcpy(pLine, sLine, w * sizeof(uint32_t));
+
+			//	for (int x = 0; x < w; x++) {}
+			
+			break;
+		case VERTICAL:
+			for (int y = 0; y < h; y++) {
+				sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
+				pLine = (uint32_t*)((uint8_t*)scan0 + stride*(h - 1) - stride*(y));
+				//if(fCancel())return;
+				//memcpy(pLine, sLine, w * sizeof(uint32_t));
+
+				for (int x = 0; x < w; x++) {
+					*pLine = *sLine;
+				}
+
+				break;
+
+		}
+		}
+	}
+		
+
 }
