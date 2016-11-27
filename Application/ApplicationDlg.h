@@ -67,6 +67,7 @@ protected:
 	std::atomic<std::thread::id> m_thid;
 
 	bool m_show = false;
+	bool m_split = false;
 	int m_mode = HORIZONTAL;
 	int m_max;
 	int m_threads;
@@ -133,4 +134,6 @@ public:
 	afx_msg void OnUpdateImageflipVertical(CCmdUI *pCmdUI);
 	afx_msg void OnImageflipShow();
 	afx_msg void OnUpdateImageflipShow(CCmdUI *pCmdUI);
+	afx_msg void OnImageflipSplit();
+	afx_msg void OnUpdateImageflipSplit(CCmdUI *pCmdUI);
 };

@@ -256,6 +256,8 @@ BEGIN_MESSAGE_MAP(CApplicationDlg, CDialogEx)
 	ON_UPDATE_COMMAND_UI(ID_IMAGEFLIP_VERTICAL, &CApplicationDlg::OnUpdateImageflipVertical)
 	ON_COMMAND(ID_IMAGEFLIP_SHOW, &CApplicationDlg::OnImageflipShow)
 	ON_UPDATE_COMMAND_UI(ID_IMAGEFLIP_SHOW, &CApplicationDlg::OnUpdateImageflipShow)
+	ON_COMMAND(ID_IMAGEFLIP_SPLIT, &CApplicationDlg::OnImageflipSplit)
+	ON_UPDATE_COMMAND_UI(ID_IMAGEFLIP_SPLIT, &CApplicationDlg::OnUpdateImageflipSplit)
 END_MESSAGE_MAP()
 
 
@@ -336,10 +338,35 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 		}
 
 		Gdiplus::Graphics gr(lpDI->hDC);
+
 		Gdiplus::Rect destRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth, nHeight);
+		Gdiplus::Rect dRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth, nHeight);
+
 		if (m_show) {
-			if(m_mode==HORIZONTAL)gr.DrawImage(m_pBitmapFlippedH, destRect);
-			else if(m_mode==VERTICAL)gr.DrawImage(m_pBitmapFlippedV, destRect);
+
+
+			if (m_split) {
+				if (m_mode == HORIZONTAL) {
+					Gdiplus::Rect lRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth / 2, nHeight);
+					Gdiplus::Rect rRect(rct.left + (rct.Width() - nWidth) / 2 + nWidth / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth / 2, nHeight);
+					Gdiplus::Bitmap *lbmp = m_pBitmap->Clone(Gdiplus::Rect(0, 0, m_pBitmap->GetWidth() / 2, m_pBitmap->GetHeight()), m_pBitmap->GetPixelFormat());
+					Gdiplus::Bitmap *rbmp = m_pBitmapFlippedH->Clone(Gdiplus::Rect(m_pBitmap->GetWidth() / 2, 0, m_pBitmap->GetWidth() / 2, m_pBitmap->GetHeight()), m_pBitmap->GetPixelFormat());
+					gr.DrawImage(lbmp, lRect);
+					gr.DrawImage(rbmp, rRect);
+				}
+				else if (m_mode == VERTICAL) {
+					Gdiplus::Rect uRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth, nHeight / 2);
+					Gdiplus::Rect dRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2 + nHeight / 2, nWidth, nHeight / 2);
+					Gdiplus::Bitmap *ubmp = m_pBitmap->Clone(Gdiplus::Rect(0, 0, m_pBitmap->GetWidth(), m_pBitmap->GetHeight() / 2), m_pBitmap->GetPixelFormat());
+					Gdiplus::Bitmap *dbmp = m_pBitmapFlippedV->Clone(Gdiplus::Rect(0, m_pBitmap->GetHeight() / 2, m_pBitmap->GetWidth(), m_pBitmap->GetHeight() / 2), m_pBitmap->GetPixelFormat());
+					gr.DrawImage(ubmp, uRect);
+					gr.DrawImage(dbmp, dRect);
+				}
+			}
+			else {
+				if (m_mode == HORIZONTAL)gr.DrawImage(m_pBitmapFlippedH, destRect);
+				else if (m_mode == VERTICAL)gr.DrawImage(m_pBitmapFlippedV, destRect);
+			}
 		}
 		else gr.DrawImage(m_pBitmap, destRect);
 	}
@@ -870,5 +897,19 @@ void CApplicationDlg::OnImageflipShow()
 void CApplicationDlg::OnUpdateImageflipShow(CCmdUI *pCmdUI)
 {
 	if (m_show)pCmdUI->SetCheck(1);
+	else pCmdUI->SetCheck(0);
+}
+
+
+void CApplicationDlg::OnImageflipSplit()
+{
+	m_split = !m_split;
+	Invalidate();
+}
+
+
+void CApplicationDlg::OnUpdateImageflipSplit(CCmdUI *pCmdUI)
+{
+	if (m_split)pCmdUI->SetCheck(1);
 	else pCmdUI->SetCheck(0);
 }
