@@ -46,8 +46,6 @@ namespace Utils
 
 		uint32_t *pLine;
 
-
-
 		for (int y = 0; y < h; y++) {
 			pLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
 			//if(fCancel())return;
@@ -78,36 +76,31 @@ namespace Utils
 	
 	}
 
-	void FlipImage(uint32_t* scan0, uint32_t* print0, UINT32 stride, int w, int h, Flip mode) {
+	void FlipImage(uint32_t* scan0, uint32_t* printH0, uint32_t* printV0, UINT32 stride, int w, int h) {
 	
 		uint32_t *sLine,*pLine;
 		
-		switch (mode) {
-		case HORIZONTAL:
-			for (int y = 0; y < h; y++) {
+		for (int y = 0; y < h; y++) {
 				sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
-				pLine = (uint32_t*)((uint8_t*)scan0 + stride*(h - 1) - stride*(y));
+				pLine = (uint32_t*)((uint8_t*)printH0 + stride*(h - 1) - stride*(y));
 				//if(fCancel())return;
 				memcpy(pLine, sLine, w * sizeof(uint32_t));
 
-			//	for (int x = 0; x < w; x++) {}
-			
-			break;
-		case VERTICAL:
+				//	for (int x = 0; x < w; x++) {}
+			}
+
 			for (int y = 0; y < h; y++) {
 				sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
-				pLine = (uint32_t*)((uint8_t*)scan0 + stride*(h - 1) - stride*(y));
+				pLine = (uint32_t*)((uint8_t*)printV0 + stride*(y + 1))-1;
 				//if(fCancel())return;
-				//memcpy(pLine, sLine, w * sizeof(uint32_t));
 
-				for (int x = 0; x < w; x++) {
-					*pLine = *sLine;
+				for (int x = 0; x < w-1; x++) {
+					memcpy(pLine, sLine, sizeof(uint32_t));
+					sLine++;
+					pLine--;
 				}
-
-				break;
-
-		}
-		}
+			}
+		
 	}
 		
 

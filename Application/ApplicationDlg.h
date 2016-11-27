@@ -10,6 +10,9 @@
 #include <thread>
 #include <atomic>
 
+#define HORIZONTAL 1
+#define VERTICAL 2
+
 class CStaticImage : public CStatic
 {
 public:
@@ -55,7 +58,6 @@ protected:
 	bool m_bHistBlue;
 	bool m_bHistGreen;
 	bool m_bHistAlpha;
-	bool m_show;
 
 	std::vector<int> m_uHistRed;
 	std::vector<int> m_uHistBlue;
@@ -64,11 +66,8 @@ protected:
 
 	std::atomic<std::thread::id> m_thid;
 
-	enum Flip {
-		HORIZONTAL, VERTICAL
-	};
-
-	Flip m_mode;
+	bool m_show = false;
+	int m_mode = HORIZONTAL;
 	int m_max;
 	int m_threads;
 	// Generated message map functions
@@ -93,7 +92,7 @@ public:
 	afx_msg void OnDestroy();
 	
 	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA,std::thread::id me);
-	void ProcessImage(CString filename, Gdiplus::Bitmap *& bmp, Gdiplus::Bitmap *& newbmp, std::thread::id me);
+	void ProcessImage(CString filename, Gdiplus::Bitmap *& bmp, Gdiplus::Bitmap *& bmpH, Gdiplus::Bitmap *& bmpV, std::thread::id me);
 	void DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist, int max);
 	void OnLoadImage(CString fname);
 
@@ -112,7 +111,8 @@ protected:
 	CLogDlg m_ctrlLog;
 
 	Gdiplus::Bitmap * m_pBitmap;
-	Gdiplus::Bitmap * m_pBitmapFlipped;
+	Gdiplus::Bitmap * m_pBitmapFlippedH;
+	Gdiplus::Bitmap * m_pBitmapFlippedV;
 
 	DWORD m_nMaxThreads;
 public:

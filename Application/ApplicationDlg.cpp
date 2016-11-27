@@ -337,7 +337,11 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 
 		Gdiplus::Graphics gr(lpDI->hDC);
 		Gdiplus::Rect destRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth, nHeight);
-		gr.DrawImage(m_pBitmap, destRect);
+		if (m_show) {
+			if(m_mode==HORIZONTAL)gr.DrawImage(m_pBitmapFlippedH, destRect);
+			else if(m_mode==VERTICAL)gr.DrawImage(m_pBitmapFlippedV, destRect);
+		}
+		else gr.DrawImage(m_pBitmap, destRect);
 	}
 
 	CBrush brBlack(RGB(0, 0, 0));
@@ -594,11 +598,12 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 	std::thread::id thisid = std::this_thread::get_id();
 	std::vector<int> red, green, blue, a;
 	Gdiplus::Bitmap *bmp = nullptr;
-	Gdiplus::Bitmap *newbmp = nullptr;
+	Gdiplus::Bitmap *bmpH = nullptr;
+	Gdiplus::Bitmap *bmpV = nullptr;
 	m_thid = std::this_thread::get_id();
 
 	//LoadAndCalc(fname, bmp, red, green, blue, a,m_thid);
-	ProcessImage(fname, bmp, newbmp,thisid);
+	ProcessImage(fname, bmp, bmpH,bmpV,m_thid);
 
 	if (thisid == m_thid) {
 
@@ -606,7 +611,7 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 		std::tuple<Gdiplus::Bitmap*, std::vector<int>&, std::vector<int>&, std::vector<int>&, std::vector<int>&> obj(bmp, red, green, blue, a);
 		SendMessage(WM_SET_BITMAP, (WPARAM)&obj);
 		*/
-		std::tuple<Gdiplus::Bitmap*, Gdiplus::Bitmap* > obj(bmp,newbmp);
+		std::tuple<Gdiplus::Bitmap*, Gdiplus::Bitmap*, Gdiplus::Bitmap* > obj(bmp,bmpH,bmpV);
 		SendMessage(WM_SET_BITMAP, (WPARAM)&obj);
 
 		/*
@@ -634,12 +639,12 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 		m_pBitmap = nullptr;
 	}
 
-	if (m_pBitmapFlipped != nullptr)
+	/*if (m_pBitmapFlipped != nullptr)
 	{
 		delete m_pBitmapFlipped;
 		m_pBitmapFlipped = nullptr;
 	}
-
+	*/
 	CString csFileName;
 	POSITION pos = m_ctrlFileList.GetFirstSelectedItemPosition();
 	if (pos)
@@ -673,9 +678,11 @@ LRESULT CApplicationDlg::OnSetBitmap(WPARAM wParam, LPARAM lParam) {
 	m_ctrlImage.Invalidate();
 	m_ctrlHistogram.Invalidate();*/
 
-	auto tup = (std::tuple<Gdiplus::Bitmap*, Gdiplus::Bitmap*>*)(wParam);
+	auto tup = (std::tuple<Gdiplus::Bitmap*, Gdiplus::Bitmap*, Gdiplus::Bitmap*>*)(wParam);
 	m_pBitmap = std::get<0>(*tup);
-	m_pBitmapFlipped = std::get<1>(*tup);
+	m_pBitmapFlippedH = std::get<1>(*tup);
+	m_pBitmapFlippedV = std::get<2>(*tup);
+
 	m_ctrlImage.Invalidate();
 
 	return 0;
@@ -708,7 +715,6 @@ void CApplicationDlg::OnUpdateLogClear(CCmdUI *pCmdUI)
 
 void CApplicationDlg::OnHistogramRed()
 {
-	// TODO: HISTOGRAM RED
 	m_bHistRed = !m_bHistRed;
 	Invalidate();
 }
@@ -716,7 +722,6 @@ void CApplicationDlg::OnHistogramRed()
 
 void CApplicationDlg::OnUpdateHistogramRed(CCmdUI *pCmdUI)
 {
-	// TODO: HIST RED UPDATE
 	if(m_bHistRed)pCmdUI->SetCheck(1);
 	else pCmdUI->SetCheck(0);
 }
@@ -785,19 +790,21 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	bmp->UnlockBits(&bmpd);
 }
 
-void CApplicationDlg::ProcessImage(CString filename, Gdiplus::Bitmap *&bmp, Gdiplus::Bitmap *&newbmp, std::thread::id me) {
+void CApplicationDlg::ProcessImage(CString filename, Gdiplus::Bitmap *&bmp, Gdiplus::Bitmap *&bmpH, Gdiplus::Bitmap *&bmpV, std::thread::id me) {
 
 	bmp = Gdiplus::Bitmap::FromFile(filename);
-	newbmp = Gdiplus::Bitmap::FromFile(filename);
+	bmpH = Gdiplus::Bitmap::FromFile(filename);
+	bmpV = Gdiplus::Bitmap::FromFile(filename);
 	uint32_t *pLine;
 	Gdiplus::BitmapData bmpd;
-	Gdiplus::BitmapData nbmpd;
+	Gdiplus::BitmapData hbmpd;
+	Gdiplus::BitmapData vbmpd;
 	Gdiplus::Rect *rect = new Gdiplus::Rect(0, 0, bmp->GetWidth(), bmp->GetHeight());
 	if (bmp == NULL)return;
 	bmp->LockBits(rect, Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmpd);
-	newbmp->LockBits(rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppRGB, &nbmpd);
-
-	Utils::FlipImage((uint32_t *)bmpd.Scan0, (uint32_t *)nbmpd.Scan0, bmpd.Stride, bmp->GetWidth(), bmp->GetHeight(), m_mode);
+	bmpH->LockBits(rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppRGB, &hbmpd);
+	bmpV->LockBits(rect, Gdiplus::ImageLockModeWrite, PixelFormat32bppRGB, &vbmpd);
+	Utils::FlipImage((uint32_t *)bmpd.Scan0, (uint32_t *)hbmpd.Scan0, (uint32_t *)vbmpd.Scan0, bmpd.Stride, bmp->GetWidth(), bmp->GetHeight());
 
 	/*for (int x = 0; x < histR.size(); x++) {
 	histR[x] = log(histR[x]);
@@ -806,7 +813,8 @@ void CApplicationDlg::ProcessImage(CString filename, Gdiplus::Bitmap *&bmp, Gdip
 	}*/
 
 	bmp->UnlockBits(&bmpd);
-	newbmp->UnlockBits(&bmpd);
+	bmpH->UnlockBits(&bmpd);
+	bmpV->UnlockBits(&bmpd);
 }
 
 void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int> &hist,int max) {
@@ -834,6 +842,8 @@ void CApplicationDlg::OnImageflipHorizontal()
 
 void CApplicationDlg::OnUpdateImageflipHorizontal(CCmdUI *pCmdUI)
 {
+	if(m_mode==HORIZONTAL) pCmdUI->SetCheck(1);
+	else pCmdUI->SetCheck(0);
 }
 
 
@@ -846,16 +856,19 @@ void CApplicationDlg::OnImageflipVertical()
 
 void CApplicationDlg::OnUpdateImageflipVertical(CCmdUI *pCmdUI)
 {
+	if (m_mode == VERTICAL) pCmdUI->SetCheck(1);
+	else pCmdUI->SetCheck(0);
 }
 
 
 void CApplicationDlg::OnImageflipShow()
 {
 	m_show = !m_show;
+	Invalidate();
 }
 
 void CApplicationDlg::OnUpdateImageflipShow(CCmdUI *pCmdUI)
 {
-	if (m_show)pCmdUI->SetCheck();
+	if (m_show)pCmdUI->SetCheck(1);
 	else pCmdUI->SetCheck(0);
 }
