@@ -34,7 +34,8 @@ public:
 	{
 		WM_DRAW_IMAGE = (WM_USER + 1),
 		WM_DRAW_HISTOGRAM,
-		WM_SET_BITMAP
+		WM_SET_BITMAP,
+		WM_PROCESS_BITMAP
 	};
 
 	CApplicationDlg(CWnd* pParent = NULL);	// standard constructor
@@ -70,7 +71,7 @@ protected:
 	bool m_split = false;
 	int m_mode = HORIZONTAL;
 	int m_max;
-	int m_threads;
+	int m_threads = 2;
 	// Generated message map functions
 	BOOL OnInitDialog() override;
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
@@ -90,9 +91,10 @@ public:
 	afx_msg LRESULT OnDrawImage(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnDrawHistogram(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnSetBitmap(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnProcessBitmap(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
 	
-	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA,std::thread::id me);
+	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB,std::thread::id me);
 	void ProcessImage(CString filename, Gdiplus::Bitmap *& bmp, Gdiplus::Bitmap *& bmpH, Gdiplus::Bitmap *& bmpV, std::thread::id me);
 	void DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist, int max);
 	void OnLoadImage(CString fname);
@@ -136,4 +138,9 @@ public:
 	afx_msg void OnUpdateImageflipShow(CCmdUI *pCmdUI);
 	afx_msg void OnImageflipSplit();
 	afx_msg void OnUpdateImageflipSplit(CCmdUI *pCmdUI);
+	afx_msg void OnThreads2();
+	afx_msg void OnThreads3();
+	afx_msg void OnThreads4();
+	afx_msg void OnThreads8();
+	afx_msg void OnThreads11();
 };
