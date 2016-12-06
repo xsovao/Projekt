@@ -352,7 +352,7 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 
 
 			if (m_split) {
-				if (m_mode == HORIZONTAL) {
+				if (m_mode == VERTICAL) {
 					Gdiplus::Rect lRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth / 2, nHeight);
 					Gdiplus::Rect rRect(rct.left + (rct.Width() - nWidth) / 2 + nWidth / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth / 2, nHeight);
 					Gdiplus::Bitmap *lbmp = m_pBitmap->Clone(Gdiplus::Rect(0, 0, m_pBitmap->GetWidth() / 2, m_pBitmap->GetHeight()), m_pBitmap->GetPixelFormat());
@@ -360,7 +360,7 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 					gr.DrawImage(lbmp, lRect);
 					gr.DrawImage(rbmp, rRect);
 				}
-				else if (m_mode == VERTICAL) {
+				else if (m_mode == HORIZONTAL) {
 					Gdiplus::Rect uRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2, nWidth, nHeight / 2);
 					Gdiplus::Rect dRect(rct.left + (rct.Width() - nWidth) / 2, rct.top + (rct.Height() - nHeight) / 2 + nHeight / 2, nWidth, nHeight / 2);
 					Gdiplus::Bitmap *ubmp = m_pBitmap->Clone(Gdiplus::Rect(0, 0, m_pBitmap->GetWidth(), m_pBitmap->GetHeight() / 2), m_pBitmap->GetPixelFormat());
@@ -370,8 +370,8 @@ LRESULT CApplicationDlg::OnDrawImage(WPARAM wParam, LPARAM lParam)
 				}
 			}
 			else {
-				if (m_mode == HORIZONTAL)gr.DrawImage(m_pBitmapFlippedH, destRect);
-				else if (m_mode == VERTICAL)gr.DrawImage(m_pBitmapFlippedV, destRect);
+				if (m_mode ==VERTICAL)gr.DrawImage(m_pBitmapFlippedH, destRect);
+				else if (m_mode == HORIZONTAL)gr.DrawImage(m_pBitmapFlippedV, destRect);
 			}
 		}
 		else gr.DrawImage(m_pBitmap, destRect);
@@ -811,7 +811,6 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 	histB.assign(256, 0);
 
 	if (bmp == NULL)return;
-	uint32_t *pLine;
 	Gdiplus::BitmapData bmpd;
 	Gdiplus::Rect *rect = new Gdiplus::Rect(0, 0, bmp->GetWidth(), bmp->GetHeight());
 	bmp->LockBits(rect,Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmpd);
@@ -824,7 +823,7 @@ void CApplicationDlg::LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::
 		histB[x] = log(histB[x]);
 	}*/
 
-	for (int x = 0; x < histR.size(); x++) {
+	for (uint8_t x = 0; x < histR.size(); x++) {
 		if (histR[x] > m_max)m_max = histR[x];
 		if (histG[x] > m_max)m_max = histG[x];
 		if (histB[x] > m_max)m_max = histB[x];
@@ -836,7 +835,6 @@ void CApplicationDlg::ProcessImage(CString filename, Gdiplus::Bitmap *&bmp, Gdip
 
 	bmpH = Gdiplus::Bitmap::FromFile(filename);
 	bmpV = Gdiplus::Bitmap::FromFile(filename);
-	uint32_t *pLine;
 	Gdiplus::BitmapData bmpd;
 	Gdiplus::BitmapData hbmpd;
 	Gdiplus::BitmapData vbmpd;
@@ -856,13 +854,11 @@ void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int
 
 	double dw = (double)rect.Width() / 255.0;
 	double dh;
-	std::vector<int> val();
 
-
-	for (int x = 0; x <hist.size(); x++) {
+	for (uint8_t x = 0; x <hist.size(); x++) {
 
 		dh = (double)(log(hist[x]) / log((double)max)) * rect.Height();
-		pDC->FillSolidRect(dw*x, rect.Height() - dh, 1, dh, clr);
+		pDC->FillSolidRect((int)dw*x, rect.Height() - (int)dh, 1, (int)dh, clr);
 
 	}
 

@@ -30,8 +30,12 @@ LIBRARY_API std::pair< CString, std::vector<CString> > ParseFiles(LPCTSTR lpstrF
 	return Utils::ParseFiles(lpstrFile);
 }
 
-LIBRARY_API void CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA) {
-	return Utils::CalcHist(scan0, stride, w, h, histR, histG, histB, histA);
-
+LIBRARY_API void CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, int thrs, std::function<bool()> fCancel) {
+	return Utils::CalcHist(scan0, stride, w, h, histR, histG, histB,thrs,fCancel);
 }
+
+LIBRARY_API void FlipImage(uint32_t * scan0, uint32_t * printH0, uint32_t * printV0, UINT32 stride, int w, int h, int thrs, std::function<bool()> fCancel) {
+	return FlipImage(scan0, printH0, printV0, stride, w, h, thrs, fCancel);
+}
+
 

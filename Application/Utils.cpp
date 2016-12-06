@@ -44,11 +44,9 @@ namespace Utils
 	}
 
 	void CalcHist(uint32_t* scan0, UINT32 stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB,int thrs,std::function<bool()> fCancel) {
-
-		uint32_t *pLine;
-
+		
 		std::thread *threads = new std::thread[thrs];
-
+		if (fCancel())return;
 		for (int i = 0; i < thrs; i++) {
 			if (i<thrs - 1)
 				threads[i] = std::thread(&Utils::ThreadCalc, scan0, stride, i*w / thrs, (i + 1)*w / thrs - 1, 0, h, std::ref(histR), std::ref(histG), std::ref(histB), fCancel);
@@ -59,27 +57,14 @@ namespace Utils
 		for (int i = 0; i < thrs; i++) {
 			threads[i].join();
 		}
-		
-		/*
-		for (int y = 0; y < h; y++) {
-			pLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
-			if(fCancel())return;
-			for (int x = 0; x < w; x++) {
-				histR[((*pLine) >> 16) & 0xff]++;
-				histG[((*pLine) >> 8) & 0xff]++;
-				histB[(*pLine) & 0xff]++;
-				pLine++;
-			}
-			
-		}*/
 	}
 
 	void ThreadCalc(uint32_t* scan0, UINT32 stride, int x1, int x2,int y1, int y2, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::function<bool()> fCancel) {
 		
 		uint32_t *pLine;
 		for (int y = y1; y < y2; y++) {
+			if (fCancel())return;
 			pLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
-			//if(fCancel())return;
 			for (int x = x1; x < x2; x++) {
 				histR[((*pLine) >> 16) & 0xff]++;
 				histG[((*pLine) >> 8) & 0xff]++;
@@ -93,11 +78,12 @@ namespace Utils
 
 	void FlipImage(uint32_t* scan0, uint32_t* printH0, uint32_t* printV0, UINT32 stride, int w, int h, int thrs,std::function<bool()> fCancel) {
 	
-		uint32_t *sLine,*pLine;
+		
 		
 		std::thread *threads = new std::thread[thrs];
 
 		for (int i = 0; i < thrs; i++) {
+			if (fCancel())return;
 			if (i<thrs - 1)
 				threads[i] = std::thread(&Utils::ThreadFlip, scan0, printH0,printV0,stride, w,h, i*h/thrs,(i + 1)*h / thrs - 1, fCancel);
 			else
@@ -108,7 +94,10 @@ namespace Utils
 			threads[i].join();
 		}
 
-		/*for (int y = 0; y < h; y++) {
+		/*
+		
+		uint32_t *sLine,*pLine;
+		for (int y = 0; y < h; y++) {
 				sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
 				pLine = (uint32_t*)((uint8_t*)printH0 + stride*(h - 1) - stride*(y));
 				if(fCancel())return;
@@ -139,6 +128,7 @@ namespace Utils
 			sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
 			pLine = (uint32_t*)((uint8_t*)printH0 + stride*(h - 1) - stride*(y));
 			memcpy(pLine, sLine, w * sizeof(uint32_t));
+			//*pLine = *sLine;
 		}
 
 		for (int y = h1; y < h2; y++) {
@@ -146,7 +136,8 @@ namespace Utils
 			sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
 			pLine = (uint32_t*)((uint8_t*)printV0 + stride*(y + 1)) - 1;
 			for (int x = 0; x < w - 1; x++) {
-				memcpy(pLine, sLine, sizeof(uint32_t));
+				//memcpy(pLine, sLine, sizeof(uint32_t));
+				*pLine = *sLine;
 				sLine++;
 				pLine--;
 			}

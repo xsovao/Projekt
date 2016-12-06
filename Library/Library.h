@@ -10,6 +10,7 @@
 #define LIBRARY_API __declspec(dllimport)
 #endif
 
+#include <functional>
 // This class is exported from the Library.dll
 //class LIBRARY_API CLibrary {
 //public:
@@ -22,4 +23,7 @@
 //LIBRARY_API int fnLibrary(void);
 
 LIBRARY_API std::pair< CString, std::vector<CString> > ParseFiles(LPCTSTR lpstrFile);
-LIBRARY_API void CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, std::vector<int> &histA);
+
+LIBRARY_API void CalcHist(uint32_t* scan0, UINT32 stride, int w, int h, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB, int thrs, std::function<bool()> fCancel);
+LIBRARY_API void FlipImage(uint32_t * scan0, uint32_t * printH0, uint32_t * printV0, UINT32 stride, int w, int h, int thrs, std::function<bool()> fCancel);
+

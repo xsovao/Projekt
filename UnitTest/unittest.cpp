@@ -4,7 +4,6 @@
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 #include "../Library/Library.h"
-
 #include <vector>
 
 namespace UnitTest
@@ -32,27 +31,104 @@ namespace UnitTest
 	};
 	TEST_CLASS(HistogramUnitTest)
 	{
-	public:
-		TEST_METHOD(TestHist)
-		{
-			//TODO unit test
-			int w = 1024;
-			int h = 1024;
-			uint32_t* pBitmap = new uint32_t[1024*1024];
-			for (int x = 0; x < 1024*1024; x++) {
-					pBitmap[x] = 0xffff;
-			}
 
-			std::vector<int> r, g, b, i;
+		int sum(std::vector<int> a) {
+			int s = 0;
+			for (int i = 0; i < a.size(); i++)s += a[i];
+			return s;
+		}
+	public:
+		TEST_METHOD(TestHist_ZeroMap)
+		{
+			int w = 160;
+			int h = 160;
+			uint32_t* pBitmap = new uint32_t[w * h];
+			for (int x = 0; x <w*h; x++) {
+					pBitmap[x] = 0x0;
+			}
+			std::vector<int> r, g, b;
 			r.assign(256, 0);
 			g.assign(256, 0);
 			b.assign(256, 0);
-			i.assign(256, 0);
-			CalcHist(pBitmap,w*4,w,h,r,g,b,i);
+			CalcHist(pBitmap, w*4, w, h, r, g, b, 1, [this]() {return false; });
+			Assert::AreEqual(w*h,r[0],L"allR in 0");
+			Assert::AreEqual(w*h,g[0],L"allG in 0");
+			Assert::AreEqual(w*h,b[0],L"allB in 0");
+		}
+		TEST_METHOD(TestHist_OneMap)
+		{
+			int w = 160;
+			int h = 160;
+			uint32_t* pBitmap = new uint32_t[w * h];
+			for (int x = 0; x <w*h; x++) {
+				pBitmap[x] = 0xffffffff;
+			}
+			std::vector<int> r, g, b;
+			r.assign(256, 0);
+			g.assign(256, 0);
+			b.assign(256, 0);
+			CalcHist(pBitmap, w * 4, w, h, r, g, b, 1, [this]() {return false; });
+			Assert::AreEqual(w*h, r[255], L"allR in 255");
+			Assert::AreEqual(w*h, g[255], L"allG in 255");
+			Assert::AreEqual(w*h, b[255], L"allB in 255");
+		}
+		TEST_METHOD(TestHist_AllGreenMap)
+		{
+			int w = 160;
+			int h = 160;
+			uint32_t* pBitmap = new uint32_t[w * h];
+			for (int x = 0; x <w*h; x++) {
+				pBitmap[x] = 0x0000ff00;
+			}
+			std::vector<int> r, g, b;
+			r.assign(256, 0);
+			g.assign(256, 0);
+			b.assign(256, 0);
+			CalcHist(pBitmap, w * 4, w, h, r, g, b, 1, [this]() {return false; });
 
-			Assert::AreEqual(r[255],w*h,L"allR in 255");
-			Assert::AreEqual(g[255], w*h, L"allG in 255");
-			Assert::AreEqual(b[255], w*h, L"allB in 255");
+			Assert::AreEqual(w*h,g[255], L"all G = 255");
+			Assert::AreEqual(w*h,r[0], L"all R = 0");
+			Assert::AreEqual(w*h,b[0], L"all B = 0");
+			
+		}
+		TEST_METHOD(TestHist_Threads2)
+		{
+			int w = 160;
+			int h = 160;
+			uint32_t* pBitmap = new uint32_t[w * h];
+			for (int x = 0; x <w*h; x++) {
+				pBitmap[x] = 0xffffffff;
+			}
+			std::vector<int> r, g, b;
+			r.assign(256, 0);
+			g.assign(256, 0);
+			b.assign(256, 0);
+			CalcHist(pBitmap, w * 4, w, h, r, g, b, 2, [this]() {return false; });
+
+			Assert::AreEqual(w*h, sum(r), L"R passed all");
+			Assert::AreEqual(w*h, sum(g), L"G passed all");
+			Assert::AreEqual(w*h, sum(b), L"B passed all");
+
+		}
+
+		TEST_METHOD(TestHist_Threads3)
+		{
+			int w = 160;
+			int h = 160;
+			uint32_t* pBitmap = new uint32_t[w * h];
+			for (int x = 0; x <w*h; x++) {
+				pBitmap[x] = rand() % 0xffffffff;
+			}
+			std::vector<int> r, g, b;
+			r.assign(256, 0);
+			g.assign(256, 0);
+			b.assign(256, 0);
+			CalcHist(pBitmap, w * 4, w, h, r, g, b, 3, [this]() {return false; });
+
+			Assert::AreEqual(w*h, sum(r), L"R passed all");
+			Assert::AreEqual(w*h, sum(g), L"G passed all");
+			Assert::AreEqual(w*h, sum(b), L"B passed all");
+
 		}
 	};
 }
