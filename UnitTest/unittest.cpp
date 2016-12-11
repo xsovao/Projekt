@@ -148,7 +148,7 @@ namespace UnitTest
 				pBitmap3[x] = 0x0;
 			}
 
-			FlipImage(pBitmap, pBitmap2,pBitmap3, w*4, w, h, 2, [] {return false; });
+			FlipImage(pBitmap, pBitmap2,pBitmap3, w*4, w, h, 1, [] {return false; });
 			Assert::AreEqual(pBitmap[pos(0, 0)], pBitmap2[pos(0, h - 1)], L"horizontal flip");
 		}
 

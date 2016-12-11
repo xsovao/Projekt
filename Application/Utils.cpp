@@ -94,9 +94,9 @@ namespace Utils
 		for (int i = 0; i < thrs; i++) {
 			if (fCancel())return;
 			if (i < thrs - 1)
-				threads[i] = std::thread(&Utils::ThreadFlip, std::ref(scan0), std::ref(printH0), std::ref(printV0), stride, w, h, i*h / thrs, (i + 1)*h / thrs, fCancel);
+				threads[i] = std::thread(&Utils::ThreadFlip, scan0, printH0,printV0, stride, w, h, i*h / thrs, (i + 1)*h / thrs, fCancel);
 			else
-				threads[i] = std::thread(&Utils::ThreadFlip, std::ref(scan0), std::ref(printH0), std::ref(printV0), stride,w,h, i*h / thrs, h, fCancel);
+				threads[i] = std::thread(&Utils::ThreadFlip, scan0, printH0,printV0, stride,w,h, i*h / thrs, h, fCancel);
 		}
 
 		for (int i = 0; i < thrs; i++) {
@@ -133,7 +133,7 @@ namespace Utils
 		uint32_t *sLine, *pLine;
 
 		for (int y = h1; y < h2; y++) {
-			//if (fCancel())return;
+			if (fCancel())return;
 			sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
 			pLine = (uint32_t*)((uint8_t*)printH0 + stride*(h - 1) - stride*(y));
 			memcpy(pLine, sLine, w * sizeof(uint32_t));
@@ -141,7 +141,7 @@ namespace Utils
 		}
 
 		for (int y = h1; y < h2; y++) {
-			//if (fCancel())return;
+			if (fCancel())return;
 			sLine = (uint32_t*)((uint8_t*)scan0 + stride*(y));
 			pLine = (uint32_t*)((uint8_t*)printV0 + stride*(y + 1)) - 1;
 			for (int x = 0; x < w - 1; x++) {
