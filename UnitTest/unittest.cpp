@@ -6,6 +6,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 #include "../Library/Library.h"
 #include <vector>
 
+#define pos(x,y) x+w*y
 namespace UnitTest
 {
 	TEST_CLASS(ParseFilesUnitTest)
@@ -34,7 +35,7 @@ namespace UnitTest
 
 		int sum(std::vector<int> a) {
 			int s = 0;
-			for (int i = 0; i < a.size(); i++)s += a[i];
+			for (int i = 0; i < (int)(a.size()); i++)s += (int)a[i];
 			return s;
 		}
 	public:
@@ -117,7 +118,7 @@ namespace UnitTest
 			int h = 160;
 			uint32_t* pBitmap = new uint32_t[w * h];
 			for (int x = 0; x <w*h; x++) {
-				pBitmap[x] = rand() % 0xffffffff;
+				pBitmap[x] = 0xffffffff;
 			}
 			std::vector<int> r, g, b;
 			r.assign(256, 0);
@@ -130,5 +131,26 @@ namespace UnitTest
 			Assert::AreEqual(w*h, sum(b), L"B passed all");
 
 		}
+	};
+
+	TEST_CLASS(FlipUnitTest) {
+		TEST_METHOD(TestFlip)
+		{
+			int w = 10;
+			int h = 10;
+			uint32_t* pBitmap = new uint32_t[w * h];
+			uint32_t* pBitmap2 = new uint32_t[w * h];
+			uint32_t* pBitmap3 = new uint32_t[w * h];
+
+			for (int x = 0; x <w*h; x++) {
+				pBitmap[x] = 0x0;
+				pBitmap2[x] = 0x0;
+				pBitmap3[x] = 0x0;
+			}
+
+			FlipImage(pBitmap, pBitmap2,pBitmap3, w*4, w, h, 2, [] {return false; });
+			Assert::AreEqual(pBitmap[pos(0, 0)], pBitmap2[pos(0, h - 1)], L"horizontal flip");
+		}
+
 	};
 }

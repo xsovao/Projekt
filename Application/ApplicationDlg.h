@@ -71,7 +71,7 @@ protected:
 	bool m_split = false;
 	int m_mode = HORIZONTAL;
 	int m_max;
-	int m_threads = 2;
+	int m_threads = 1;
 	// Generated message map functions
 	BOOL OnInitDialog() override;
 	afx_msg void OnSysCommand(UINT nID, LPARAM lParam);
