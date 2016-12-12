@@ -94,8 +94,8 @@ public:
 	afx_msg LRESULT OnProcessBitmap(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnDestroy();
 	
-	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB,std::thread::id me);
-	void ProcessImage(CString filename, Gdiplus::Bitmap *& bmp, Gdiplus::Bitmap *& bmpH, Gdiplus::Bitmap *& bmpV, std::thread::id me);
+	void LoadAndCalc(CString filename, Gdiplus::Bitmap *&bmp, std::vector<int> &histR, std::vector<int> &histG, std::vector<int> &histB,std::function<bool()> fCancel);
+	void ProcessImage(CString filename, Gdiplus::Bitmap *& bmp, Gdiplus::Bitmap *& bmpH, Gdiplus::Bitmap *& bmpV, std::function<bool()> fCancel);
 	void DrawHist(CDC *&pDC, CRect rect, COLORREF clr, std::vector<int> &hist, int max);
 	void OnLoadImage(CString fname);
 
@@ -114,8 +114,8 @@ protected:
 	CLogDlg m_ctrlLog;
 
 	Gdiplus::Bitmap * m_pBitmap;
-	Gdiplus::Bitmap * m_pBitmapFlippedH = nullptr;
-	Gdiplus::Bitmap * m_pBitmapFlippedV = nullptr;
+	Gdiplus::Bitmap * m_pBitmapFlippedH;
+	Gdiplus::Bitmap * m_pBitmapFlippedV;
 
 	DWORD m_nMaxThreads;
 public:
