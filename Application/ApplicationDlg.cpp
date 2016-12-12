@@ -635,9 +635,20 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 	Gdiplus::Bitmap *bmpV = nullptr;
 	m_thid = thisid;
 
+	if (m_pBitmapFlippedH != nullptr)
+	{
+		delete m_pBitmapFlippedH;
+		m_pBitmapFlippedH = nullptr;
+	}
+	if (m_pBitmapFlippedV != nullptr)
+	{
+		delete m_pBitmapFlippedV;
+		m_pBitmapFlippedV = nullptr;
+	}
+
 	bmp = Gdiplus::Bitmap::FromFile(fname);
 	bmpH = Gdiplus::Bitmap::FromFile(fname);
-	bmp = Gdiplus::Bitmap::FromFile(fname);
+	bmpV = Gdiplus::Bitmap::FromFile(fname);
 	//LoadAndCalc(fname, bmp, red, green, blue, m_thid);
 	/*if (thisid == m_thid) {
 
@@ -653,8 +664,9 @@ void CApplicationDlg::OnLoadImage(CString fname) {
 			SendMessage(WM_PROCESS_BITMAP, (WPARAM)&obj2);
 		
 	}
-	else {
-		if (bmp !=NULL) delete bmp;
+	else { delete bmp;
+		delete bmpH;
+		delete bmpV;
 	}
 }
 
@@ -667,6 +679,7 @@ void CApplicationDlg::OnLvnItemchangedFileList(NMHDR *pNMHDR, LRESULT *pResult)
 		delete m_pBitmap;
 		m_pBitmap = nullptr;
 	}
+	
 
 	CString csFileName;
 	POSITION pos = m_ctrlFileList.GetFirstSelectedItemPosition();
@@ -835,8 +848,6 @@ void CApplicationDlg::ProcessImage(CString filename, Gdiplus::Bitmap *&bmp, Gdip
 	bmp->UnlockBits(&bmpd);
 	bmpH->UnlockBits(&hbmpd);
 	bmpV->UnlockBits(&vbmpd);
-	if(bmpH!=NULL)delete bmpH;
-	if(bmpV!=NULL)delete bmpV;
 }
 
 void CApplicationDlg::DrawHist(CDC *&pDC,CRect rect,COLORREF clr,std::vector<int> &hist,int max) {

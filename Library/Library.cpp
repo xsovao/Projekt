@@ -35,7 +35,7 @@ LIBRARY_API void CalcHist(uint32_t* scan0, uint32_t stride, int w, int h, std::v
 }
 
 LIBRARY_API void FlipImage(uint32_t * scan0, uint32_t * printH0, uint32_t * printV0, UINT32 stride, int w, int h, int thrs, std::function<bool()> fCancel) {
-	return FlipImage(scan0, printH0, printV0, stride, w, h, thrs, fCancel);
+	return Utils::FlipImage(scan0, printH0, printV0, stride, w, h, thrs, fCancel);
 }
 
 

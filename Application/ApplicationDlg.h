@@ -114,8 +114,8 @@ protected:
 	CLogDlg m_ctrlLog;
 
 	Gdiplus::Bitmap * m_pBitmap;
-	Gdiplus::Bitmap * m_pBitmapFlippedH;
-	Gdiplus::Bitmap * m_pBitmapFlippedV;
+	Gdiplus::Bitmap * m_pBitmapFlippedH = nullptr;
+	Gdiplus::Bitmap * m_pBitmapFlippedV = nullptr;
 
 	DWORD m_nMaxThreads;
 public:

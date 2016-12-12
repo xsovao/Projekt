@@ -143,13 +143,31 @@ namespace UnitTest
 			uint32_t* pBitmap3 = new uint32_t[w * h];
 
 			for (int x = 0; x <w*h; x++) {
-				pBitmap[x] = 0x0;
-				pBitmap2[x] = 0x0;
-				pBitmap3[x] = 0x0;
+				if(x<w*h/4 || x>w*h*3/4)pBitmap[x] = 0x0;
+				else pBitmap[x] = 0xffffffff;
 			}
 
 			FlipImage(pBitmap, pBitmap2,pBitmap3, w*4, w, h, 1, [] {return false; });
 			Assert::AreEqual(pBitmap[pos(0, 0)], pBitmap2[pos(0, h - 1)], L"horizontal flip");
+			Assert::AreEqual(pBitmap[pos(0, 0)], pBitmap3[pos(h-1, 0)], L"vertical flip");
+		}
+
+		TEST_METHOD(TestFlip_Threads2)
+		{
+			int w = 10;
+			int h = 10;
+			uint32_t* pBitmap = new uint32_t[w * h];
+			uint32_t* pBitmap2 = new uint32_t[w * h];
+			uint32_t* pBitmap3 = new uint32_t[w * h];
+
+			for (int x = 0; x <w*h; x++) {
+				if (x<w*h / 4 || x>w*h * 3 / 4)pBitmap[x] = 0x0;
+				else pBitmap[x] = 0xffffffff;
+			}
+
+			FlipImage(pBitmap, pBitmap2, pBitmap3, w * 4, w, h, 2, [] {return false; });
+			Assert::AreEqual(pBitmap[pos(0, 0)], pBitmap2[pos(0, h - 1)], L"horizontal flip");
+			Assert::AreEqual(pBitmap[pos(0, 0)], pBitmap3[pos(h - 1, 0)], L"vertical flip");
 		}
 
 	};
